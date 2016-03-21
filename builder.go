@@ -45,7 +45,44 @@ func main() {
 
 	detailify(db, mSession, allTypeIDs)
 
-	fmt.Println("Success! Exiting.")
+	createCappedCollection(mSession, "planetsetups", 104857600, 10000, true)
+	//createCappedCollection(mSession, "scrappraisal", 104857600*4, 10000*4, false)
+
+	fmt.Println("Builder completed successfully! Exiting.")
+}
+
+func createCappedCollection(mdb *mgo.Session, name string, bytes int, records int, overwrite bool) bool {
+	if name == "" || (bytes == 0 && records == 0) {
+		fmt.Println("Failed to created collection '", name, "': required parameters missing")
+		return false
+	}
+	fmt.Print("Creating collection '", name, "' with size ", bytes, " bytes and max records ", records, "... ")
+	names, err := mdb.DB("sde").CollectionNames()
+	checkErr(err) // ?
+	// fmt.Println("Names are", names)
+	for i := range names {
+		if names[i] == name {
+			if overwrite {
+				fmt.Print("exists, deleting... ")
+				mdb.DB("sde").C(name).DropCollection()
+			} else {
+				fmt.Println("already exists, not overwriting")
+				return false
+			}
+		}
+	}
+	// fmt.Println("past checking collection for exists")
+
+	cappedCollection := mdb.DB("sde").C(name)
+	info := mgo.CollectionInfo{
+		Capped:   true,
+		MaxBytes: bytes,
+		MaxDocs:  records,
+	}
+	err = cappedCollection.Create(&info)
+	checkErr(err)
+	fmt.Println("Created successfully!")
+	return true
 }
 
 func setJoin(setList []map[int]bool) map[int]bool {
