@@ -208,7 +208,7 @@ Planetify and its stuff
 type schematicDetails struct {
 	TypeID   int
 	Quantity int
-	IsInput  int
+	IsInput  bool
 }
 
 type piRecipe struct {
@@ -236,7 +236,7 @@ func planetify(sql *sql.DB, mdb *mgo.Session) map[int]bool {
 		var schematicId int
 		var typeID int
 		var quantity int
-		var isInput int
+		var isInput bool
 		schematicLines.Scan(&schematicId, &typeID, &quantity, &isInput)
 
 		if schematic, prs := schematicMap[schematicId]; prs {
@@ -257,7 +257,7 @@ func planetify(sql *sql.DB, mdb *mgo.Session) map[int]bool {
 		input := make([]recipeInput, 0)
 		for i := range value {
 			set[value[i].TypeID] = true
-			if value[i].IsInput == 0 {
+			if value[i].IsInput == false {
 				output = recipeInput{value[i].TypeID, value[i].Quantity}
 			} else {
 				input = append(input, recipeInput{value[i].TypeID, value[i].Quantity})
